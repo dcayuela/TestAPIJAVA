@@ -1,0 +1,47 @@
+name: CI - Vagrant Hyper-V Docker Rootless
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  vagrant-test:
+    runs-on: windows-latest
+
+    steps:
+      # 1️⃣ Récupérer le repo
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 2️⃣ Installer Vagrant
+      - name: Setup Vagrant
+        uses: hashicorp/setup-vagrant@v2
+        with:
+          version: '2.3.0'
+
+      # 3️⃣ Lancer Vagrant Hyper-V avec provisioning
+      - name: Lancer VM et provisioning
+        shell: pwsh
+        run: |
+          vagrant up --provider=hyperv --provision
+
+      # 3️⃣ Lancer Vagrant Hyper-V sans provisioning
+      #- name: Lancer VM sans provisioning
+      #  shell: pwsh
+      #  run: |
+      #    SKIP_SHELL=true vagrant up --provider=hyperv --provision
+
+      # 4️⃣ Tester Docker rootless et Compose
+      - name: Vérification Docker
+        shell: pwsh
+        run: |
+          vagrant ssh -c "docker --version"
+          vagrant ssh -c "docker compose version"
+
+      # 5️⃣ Nettoyage
+      - name: Détruire VM
+        if: always()
+        shell: pwsh
+        run: vagrant destroy -f
