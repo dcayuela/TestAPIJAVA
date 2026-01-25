@@ -11,58 +11,48 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Récupérer le code
-      - name: Checkout repo
+      # 1️⃣ Checkout du code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Installer Chocolatey (si pas déjà présent)
-      - name: Install Chocolatey
+      # 2️⃣ Installer Chocolatey et Vagrant, lancer la VM, et vérifier Docker
+      - name: Setup Vagrant, Docker rootless & Compose
         shell: pwsh
         run: |
+          # Installer Chocolatey si nécessaire
           if (-Not (Get-Command choco -ErrorAction SilentlyContinue)) {
               Set-ExecutionPolicy Bypass -Scope Process -Force
               [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
               iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
           }
 
-      # 3️⃣ Installer Vagrant et ajouter au PATH
-      - name: Install Vagrant
-        shell: pwsh
-        run: |
+          # Installer Vagrant
           choco install vagrant -y
+
+          # Ajouter le chemin Chocolatey au PATH pour cette session
           $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+
+          # Vérifier que Vagrant est installé
+          Write-Host "Vagrant version:"
           vagrant --version
 
-      # 4️⃣ Lancer Vagrant Hyper-V avec provisioning
-      - name: Lancer VM et provisioning
-        shell: pwsh
-        run: |
-          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+          # Lancer la VM Hyper-V avec provisionnement
           vagrant up --provider=hyperv --provision
 
-      # 3️⃣ Lancer Vagrant Hyper-V sans provisioning
-      #- name: Lancer VM sans provisioning
-      #  shell: pwsh
-      #  run: |
-      #    $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
-      #    SKIP_SHELL=true vagrant up --provider=hyperv --provision
-
-      # 5️⃣ Vérifier Docker rootless
-      - name: Check Docker Rootless
-        shell: pwsh
-        run: |
-          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+          # Vérifier Docker rootless
+          Write-Host "Docker info:"
           vagrant ssh -c "docker info | grep Rootless"
 
-      # 6️⃣ Vérifier Docker Compose V2
-      - name: Check Docker Compose V2
-        shell: pwsh
-        run: |
-          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+          # Vérifier Docker Compose V2
+          Write-Host "Docker Compose version:"
           vagrant ssh -c "docker compose version"
 
-      # 7️⃣ Nettoyage
-      - name: Détruire VM
+          # Test rapide : lancer un container hello-world
+          Write-Host "Running hello-world container:"
+          vagrant ssh -c "docker run --rm hello-world"
+
+      # 3️⃣ Détruire la VM à la fin pour nettoyage
+      - name: Destroy VM
         if: always()
         shell: pwsh
         run: |
