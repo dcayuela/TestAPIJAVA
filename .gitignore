@@ -1,6 +1,9 @@
 # Local .vscode directories
 .vscode/
 
+# .vscode file
+.vscode
+
 # Local .terraform directories
 .terraform/
 
