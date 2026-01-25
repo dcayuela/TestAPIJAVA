@@ -4,6 +4,9 @@
 # .vscode file
 .vscode
 
+# Local .vagrant directories
+.vagrant/
+
 # Local .terraform directories
 .terraform/
 
