@@ -11,17 +11,26 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Récupérer le repo
-      - name: Checkout
-        uses: actions/checkout@v3
+      # 1️⃣ Checkout code
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      # 2️⃣ Installer Vagrant
-      - name: Setup Vagrant
-        uses: hashicorp/setup-vagrant@v1
-        with:
-          version: '2.3.0'
+      # 2️⃣ Installer Chocolatey (si pas déjà présent)
+      - name: Install Chocolatey
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      # 3️⃣ Lancer Vagrant Hyper-V avec provisioning
+      # 3️⃣ Installer Vagrant
+      - name: Install Vagrant
+        shell: pwsh
+        run: |
+          choco install vagrant -y
+          vagrant --version
+
+      # 4️⃣ Lancer Vagrant Hyper-V avec provisioning
       - name: Lancer VM et provisioning
         shell: pwsh
         run: |
@@ -33,14 +42,19 @@ jobs:
       #  run: |
       #    SKIP_SHELL=true vagrant up --provider=hyperv --provision
 
-      # 4️⃣ Tester Docker rootless et Compose
-      - name: Vérification Docker
+      # 5️⃣ Vérifier Docker rootless
+      - name: Check Docker Rootless
         shell: pwsh
         run: |
-          vagrant ssh -c "docker --version"
+          vagrant ssh -c "docker info | grep Rootless"
+
+      # 6️⃣ Vérifier Docker Compose V2
+      - name: Check Docker Compose V2
+        shell: pwsh
+        run: |
           vagrant ssh -c "docker compose version"
 
-      # 5️⃣ Nettoyage
+      # 7️⃣ Nettoyage
       - name: Détruire VM
         if: always()
         shell: pwsh
