@@ -17,7 +17,7 @@ jobs:
 
       # 2️⃣ Installer Vagrant
       - name: Setup Vagrant
-        uses: hashicorp/setup-vagrant@v2
+        uses: hashicorp/setup-vagrant@v1
         with:
           version: '2.3.0'
 
