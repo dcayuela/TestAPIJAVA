@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Récupérer le code
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -19,43 +19,52 @@ jobs:
       - name: Install Chocolatey
         shell: pwsh
         run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          if (-Not (Get-Command choco -ErrorAction SilentlyContinue)) {
+              Set-ExecutionPolicy Bypass -Scope Process -Force
+              [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+              iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          }
 
-      # 3️⃣ Installer Vagrant
+      # 3️⃣ Installer Vagrant et ajouter au PATH
       - name: Install Vagrant
         shell: pwsh
         run: |
           choco install vagrant -y
+          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
           vagrant --version
 
       # 4️⃣ Lancer Vagrant Hyper-V avec provisioning
       - name: Lancer VM et provisioning
         shell: pwsh
         run: |
+          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
           vagrant up --provider=hyperv --provision
 
       # 3️⃣ Lancer Vagrant Hyper-V sans provisioning
       #- name: Lancer VM sans provisioning
       #  shell: pwsh
       #  run: |
+      #    $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
       #    SKIP_SHELL=true vagrant up --provider=hyperv --provision
 
       # 5️⃣ Vérifier Docker rootless
       - name: Check Docker Rootless
         shell: pwsh
         run: |
+          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
           vagrant ssh -c "docker info | grep Rootless"
 
       # 6️⃣ Vérifier Docker Compose V2
       - name: Check Docker Compose V2
         shell: pwsh
         run: |
+          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
           vagrant ssh -c "docker compose version"
 
       # 7️⃣ Nettoyage
       - name: Détruire VM
         if: always()
         shell: pwsh
-        run: vagrant destroy -f
+        run: |
+          $env:Path += ";$env:ALLUSERSPROFILE\chocolatey\bin"
+          vagrant destroy -f
