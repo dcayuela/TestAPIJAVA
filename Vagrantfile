@@ -16,7 +16,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
   
   # Synced folder
   # Le dossier local . sera monté dans /vagrant dans la VM
-  config.vm.synced_folder ".", "/vagrant", type: "smb"
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
 
   # Ressources
   config.vm.provider  :virtualbox  do  |v|
@@ -32,11 +32,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
 	    # Réseau privé
       app.vm.network "private_network", ip: "192.168.50.10"
       # Ressources
-      app.vm.provider "hyperv" do |hv|
-        hv.cpus = 4
-        hv.memory = 4096
-        hv.enable_virtualization_extensions = true
-        hv.vmname = "UbuntuDockerRootless"
+      app.vm.provider "virtualbox" do |vb|
+        vb.name = "ubuntu-22.04-docker-rootless"
+        vb.cpus = 4
+        vb.memory = 4096
       end
   
       # 1- Provisioning Shell (bootstrap)
@@ -49,26 +48,32 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
 
           echo "=== Mise à jour & dépendances ==="
           sudo apt-get update -y
-          sudo apt-get install -y curl wget git sudo
+          sudo apt-get install -y \
+            ca-certificates \
+            curl \
+            wget \
+            git \
+            sudo \
+            dbus-user-session \
+            slirp4netns \
+            fuse-overlayfs
 
-          echo "=== Création utilisateur docker pour rootless ==="
-          id -u dockeruser &>/dev/null || sudo adduser --disabled-password --gecos "" dockeruser
-          sudo usermod -aG sudo dockeruser
+            echo "🐳 Installation Docker (rootless ready)"
+            curl -fsSL https://get.docker.com | sh
 
-          echo "=== Installer Docker rootless ==="
-          su - dockeruser -c "curl -fsSL https://get.docker.com/rootless | sh"
+            echo "📦 Installation Docker Compose v2 (plugin)"
+            apt-get install -y docker-compose-plugin
 
-          echo 'export PATH=/home/dockeruser/bin:$PATH' >> /home/dockeruser/.bashrc
+            echo "🔑 Activation du linger pour l'utilisateur vagrant"
+            loginctl enable-linger vagrant
 
-          echo "=== Installer Docker Compose V2 ==="
-          sudo curl -SL https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+            echo "🐳 Configuration Docker rootless pour vagrant"
+            su - vagrant -c "dockerd-rootless-setuptool.sh install"
 
-          echo "=== Vérification Docker rootless et Compose ==="
-          su - dockeruser -c "docker --version"
-          su - dockeruser -c "docker compose version"
+            echo "🔐 Variables d'environnement"
+            echo 'export DOCKER_HOST=unix:///run/user/1000/docker.sock' >> /home/vagrant/.bashrc
 
-          echo "=== Provisioning terminé ==="
+            echo "✅ Docker rootless + Compose installés"
 
         SHELL
       else
