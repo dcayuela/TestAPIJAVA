@@ -59,11 +59,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
             slirp4netns \
             fuse-overlayfs
 
-            echo "🐳 Installation Docker (rootless ready)"
+            echo "🐳 Installation Docker Engine"
             curl -fsSL https://get.docker.com | sh
-
-            echo "📦 Installation Docker Compose v2 (plugin)"
-            apt-get install -y docker-compose-plugin
 
         SHELL
       else
@@ -99,11 +96,7 @@ EOF
             echo "🔐 Variables d'environnement"
             echo 'export DOCKER_HOST=unix:///run/user/1000/docker.sock' >> ~/.bashrc
 
-            echo "▶️ Démarrage Docker rootless"
-            systemctl --user daemon-reexec
-            systemctl --user restart docker
-
-            echo "✅ Docker rootless + Compose prêts"
+            echo "✅ Docker rootless + Compose installé (démarrage à la connexion utilisateur)"
 
         SHELL
       else
