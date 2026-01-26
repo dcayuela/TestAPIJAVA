@@ -40,7 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
   
       # 1- Provisioning Shell (bootstrap)
       unless SKIP_SHELL
-	      app.vm.provision "shell", inline: <<-SHELL
+	      app.vm.provision "shell", privileged: true, inline: <<-SHELL
           sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
           sudo systemctl restart sshd
 
@@ -54,6 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
             wget \
             git \
             sudo \
+            uidmap \
             dbus-user-session \
             slirp4netns \
             fuse-overlayfs
@@ -64,16 +65,38 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
             echo "📦 Installation Docker Compose v2 (plugin)"
             apt-get install -y docker-compose-plugin
 
-            echo "🔑 Activation du linger pour l'utilisateur vagrant"
+        SHELL
+      else
+        puts "Shell provisioning skipped (SKIP_SHELL=true)"
+      end       
+      
+      unless SKIP_SHELL
+	      app.vm.provision "shell", privileged: false, inline: <<-SHELL     
+
+            set -e
+
+            echo "🔑 Enable linger"
             loginctl enable-linger vagrant
 
-            echo "🐳 Configuration Docker rootless pour vagrant"
-            su - vagrant -c "dockerd-rootless-setuptool.sh install"
+            echo "🐳 Installation Docker rootless (no cgroup)"
+            dockerd-rootless-setuptool.sh install --skip-iptables
+
+            echo "🔧 Désactivation explicite des cgroups"
+            mkdir -p ~/.config/docker
+            cat <<EOF > ~/.config/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=none"]
+}
+EOF
 
             echo "🔐 Variables d'environnement"
-            echo 'export DOCKER_HOST=unix:///run/user/1000/docker.sock' >> /home/vagrant/.bashrc
+            echo 'export DOCKER_HOST=unix:///run/user/1000/docker.sock' >> ~/.bashrc
 
-            echo "✅ Docker rootless + Compose installés"
+            echo "▶️ Démarrage Docker rootless"
+            systemctl --user daemon-reexec
+            systemctl --user restart docker
+
+            echo "✅ Docker rootless prêt (sans reboot)"
 
         SHELL
       else
