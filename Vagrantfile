@@ -98,6 +98,33 @@ EOF
 
             echo "✅ Docker rootless + Compose installé (démarrage à la connexion utilisateur)"
 
+            # Script auto démarrage rootless
+            mkdir -p ~/.docker
+            cat <<'EOL' > ~/.docker/rootless-docker-start.sh
+#!/bin/bash
+export PATH=$HOME/bin:$PATH
+export DOCKER_HOST=unix:///run/user/1000/docker.sock
+if ! pgrep -f "dockerd-rootless" > /dev/null; then
+    echo "▶️ Démarrage Docker rootless..."
+    nohup dockerd-rootless.sh > $HOME/docker-rootless.log 2>&1 &
+else
+    echo "Docker rootless déjà lancé"
+fi
+EOL
+            chmod +x ~/.docker/rootless-docker-start.sh
+            echo "~/.docker/rootless-docker-start.sh" >> ~/.bashrc
+
+            # ---- Git clone ----
+            APP_DIR="$HOME/app"
+            REPO_URL="https://github.com/dcayuela/TestAPIJAVA.git"
+
+            if [ ! -d "$APP_DIR" ]; then
+              git clone $REPO_URL $APP_DIR
+              echo "✅ Dépôt Git cloné dans $APP_DIR"
+            else
+              echo "ℹ️ Dépôt Git déjà présent"
+            fi
+
         SHELL
       else
         puts "Shell provisioning skipped (SKIP_SHELL=true)"
