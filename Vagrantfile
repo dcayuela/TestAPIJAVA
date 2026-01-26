@@ -40,6 +40,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
   
       # 1- Provisioning Shell (bootstrap)
       unless SKIP_SHELL
+        # ---- Provision système (root) ----
 	      app.vm.provision "shell", privileged: true, inline: <<-SHELL
           sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
           sudo systemctl restart sshd
@@ -52,7 +53,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
             ca-certificates \
             curl \
             wget \
-            git \
             sudo \
             uidmap \
             dbus-user-session \
@@ -71,6 +71,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
       end       
       
       unless SKIP_SHELL
+        # ---- Provision utilisateur (rootless) ----
 	      app.vm.provision "shell", privileged: false, inline: <<-SHELL     
 
             set -e
@@ -81,7 +82,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION)  do  |config|
             echo "🐳 Installation Docker rootless (no cgroup)"
             dockerd-rootless-setuptool.sh install --skip-iptables
 
-            echo "🔧 Désactivation explicite des cgroups"
+            echo "📦 Installation Docker Compose v2 (user)"
+            mkdir -p ~/.docker/cli-plugins
+            curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+              -o ~/.docker/cli-plugins/docker-compose
+            chmod +x ~/.docker/cli-plugins/docker-compose
+
+            echo "🔧 Configuration Docker rootless"
             mkdir -p ~/.config/docker
             cat <<EOF > ~/.config/docker/daemon.json
 {
@@ -96,7 +103,7 @@ EOF
             systemctl --user daemon-reexec
             systemctl --user restart docker
 
-            echo "✅ Docker rootless prêt (sans reboot)"
+            echo "✅ Docker rootless + Compose prêts"
 
         SHELL
       else
