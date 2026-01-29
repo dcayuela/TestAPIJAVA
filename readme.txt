@@ -104,3 +104,5 @@ Lancer l'exemple :
 Vous devriez voir une réponse JSON avec les données des utilisateurs
 
 
+- Pour accéder au swagger de l'API : http://192.168.50.10:8080/swagger-ui/index.html
+
