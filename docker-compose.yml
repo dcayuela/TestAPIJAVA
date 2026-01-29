@@ -1,0 +1,91 @@
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci  # MySQL utilise bien UTF-8
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: my_rest_db      # Nom de la base de données
+      MYSQL_USER: rest_user           # Utilisateur pour l'application
+      MYSQL_PASSWORD: rest_password   # Mot de passe pour l'utilisateur de l'application
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - mysql_data:/var/lib/mysql
+        #- ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql   # Initialisation de la base de données au démarrage du conteneur
+    restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_app
+    links:
+      - db:mysql
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpass
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 128M
+      MEMORY_LIMIT: 256M
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    restart: always
+
+  front-app:
+    build:
+      context: ./app          # Indique à Docker Compose de contruire l'image à partir du dossier ./app
+      dockerfile: Dockerfile  # Optionnel, mais bonne pratique si le Dockerfile est nommé différemment
+    image: my-java-app:1.0    # Nommer l'image
+    container_name: front_rest_api
+    ports:
+      - "8080:8080"           # Expose le port 8080 de l'application sur le port 8080 de l'hôte
+    environment:
+      # Variables d'environnement pour la connexion à la base de données Spring Boot
+      # Evite de les déclarer dans le fichier java: application.properties
+      # Lorsque Spring Boot démarre, il recherche les propriétes de plusieurs manières, notamment:
+      # 1- Dans applicatin.properties (ou application.yml)
+      # 2- Dans les variables d'environnement du système d'exploitation
+      # 3- Dans les arguments de la ligne de commande
+      # Datasource
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/my_rest_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: rest_user
+      SPRING_DATASOURCE_PASSWORD: rest_password
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+      # Configuration JPA/Hibernate pour la création automatique du schéma
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQL8Dialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update   # 'update' pour créer/mettre à jour le schéma
+      SPRING_JPA_SHOW_SQL: 'true'             # Affiche les requêtes SQL dans les logs
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+
+      # (optionnel) timezone
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE: UTC
+
+      SERVER_PORT: 8080
+      ADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      db:    # S'assure que le servive 'db' est démarré avant 'front-app'
+        condition: service_healthy
+  frontend:
+    build:
+      context: ./frontend     # Indique à Docker Compose de contruire l'image à partir du dossier ./frontend
+      dockerfile: Dockerfile  # Optionnel, mais bonne pratique si le Dockerfile est nommé différemment
+    image: my-front-web:1.0   # Nommer l'image
+    container_name: front_web
+    ports:
+      - "4200:80"             # Expose le port 80 de l'application sur le port 4200 de l'hôte
+    depends_on:
+      - front-app
+
+
+
+volumes:
+  mysql_data:
+

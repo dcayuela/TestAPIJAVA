@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html ng-app="productApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Produits</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular-route.min.js"></script>
+
+    <!-- Scripts AngularJS -->
+    <script src="app.js"></script>
+
+    <!-- Services -->
+    <script src="services/auth.service.js"></script>
+    <script src="services/product.service.js"></script>
+    <script src="services/selected-product.service.js"></script>
+
+    <!-- Controllers -->
+    <script src="controllers/login.controller.js"></script>
+    <script src="controllers/product-list.controller.js"></script>
+    <script src="controllers/product-edit.controller.js"></script>
+</head>
+<body>
+
+<h1>Catalogue Produits</h1>
+
+<nav>
+    <a href="#!/products">Produits</a> |
+    <a href="#!/edit">Modifier un produit</a>
+</nav>
+
+<div ng-view></div>
+
+</body>
+</html>
+

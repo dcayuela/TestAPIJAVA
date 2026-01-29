@@ -113,9 +113,10 @@ fi
 EOL
             chmod +x ~/.docker/rootless-docker-start.sh
             echo "~/.docker/rootless-docker-start.sh" >> ~/.bashrc
+            sleep 5  # laisse le temps au daemon rootless de démarrer
 
             # ---- Git clone ----
-            APP_DIR="$HOME/app"
+            APP_DIR="$HOME/TestAPIJAVA"
             REPO_URL="https://github.com/dcayuela/TestAPIJAVA.git"
 
             if [ ! -d "$APP_DIR" ]; then
@@ -129,6 +130,16 @@ EOL
       else
         puts "Shell provisioning skipped (SKIP_SHELL=true)"
       end
+
+      # ---- Provision Application ----
+	    app.vm.provision "shell", inline: <<-SHELL
+
+        # ---- Lancer l'application en tache de fond ----
+        APP_DIR="$HOME/TestAPIJAVA"
+        cd $APP_DIR
+        docker compose up -d
+
+      SHELL
 
 	end
 	  
