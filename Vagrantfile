@@ -135,9 +135,9 @@ EOL
 	    app.vm.provision "shell", inline: <<-SHELL
 
         # ---- Lancer l'application en tache de fond ----
-        APP_DIR="$HOME/TestAPIJAVA"
+        APP_DIR="/home/vagrant/TestAPIJAVA"
         cd $APP_DIR
-        docker compose up -d
+        docker compose up --build -d
 
       SHELL
 
