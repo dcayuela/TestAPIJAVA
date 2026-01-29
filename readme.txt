@@ -1,4 +1,16 @@
-Une application Java Spring Boot qui se connecte à MySQL et expose une API REST.
+Une application Java Spring Boot qui se connecte à MySQL et expose une API REST utilisée par un front web AngularJS.
+
+Prérequis:
+    Applications Vagrant et VirtualBox installées
+    Créer un répertoire et y déposer le fichier Vagrantfile
+    Pour démarrer l'environnement et  l'application :
+        => Tapez: vagrant UP
+    Pour supprimer l'environnement
+        => Tapez: vagrant destroy -f
+
+    Pour se connecter à la VM docker de l'enrironnement
+        => Tapez: vagrant ssh
+
 
 Structure des fichiers :
 ------------------------
@@ -16,10 +28,30 @@ Créer un répertoire principal pour le projet, puis à l'intérieur, créer un 
             |   |__ com/
             |       |__ example/
             |           |__ demo/
-            |               |-- DemoApplication.java
-            |               |-- User.java
-            |               |-- UserRepository.java
-            |               |__ UserController.java
+            |               |__ config/
+            |               |    |-- OpenApiConfig.java      // Pour la génération du Swagger
+            |               |    |__ SecurityConfig.java
+            |               |__ controller/
+            |               |    |-- LoginController.java
+            |               |    |-- ProductController.java
+            |               |    |__ UserController.java
+            |               |__ entity/
+            |               |    |-- Product.java
+            |               |    |-- Role.java
+            |               |    |__ User.java
+            |               |__ init/
+            |               |    |-- AdminUserInitializer.java
+            |               |    |-- ProductTableInitializer.java
+            |               |    |__ RoleInitializer.java
+            |               |__ repository/
+            |               |    |-- ProductRepository.java
+            |               |    |-- RoleRepository.java
+            |               |    |__ UserRepository.java
+            |               |__ service/
+            |               |    |-- CustoUserDetailsService.java
+            |               |    |-- ProductService.java
+            |               |    |__ UserService.java
+            |               |__ DemoApplication.java
             |__ resources/
                 |__ application.properties
 
@@ -66,10 +98,9 @@ Lancer l'exemple :
 
 - Ouvrir un navigateur ou utiliser un outil comme curl pour tester l'API :
 
-  - Accéder à l'application front-end: http://localhost:8080/api/
-  - Accéder à l'endpoint des utilisateurs: http://localhost:8080/api/users
-  - Accéder à l'endpoint de l'utilisateur via son adresse mail: http://localhost:8080/api/users/<email>/name
+  - Accéder à l'application front-end: http://192.168.50.20:8080/api/products
+  - Accéder à l'endpoint des utilisateurs: curl -v http://192.168.50.10:8080/api/users -u admin:admin
 
-Vous devriez voir une réponse JSON avec les données des utilisateurs (Alice et Bob)
+Vous devriez voir une réponse JSON avec les données des utilisateurs
 
 
