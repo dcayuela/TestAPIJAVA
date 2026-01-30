@@ -106,3 +106,9 @@ Vous devriez voir une réponse JSON avec les données des utilisateurs
 
 - Pour accéder au swagger de l'API : http://192.168.50.10:8080/swagger-ui/index.html
 
+
+- Pour accéder à l'administration de la base de données MySQL: http://192.168.50.10:8081
+    => Login:    rest_user
+    => Password: rest_password
+
+- Pour accéder au Front WEB de l'application : http://192.168.50.10:4200
